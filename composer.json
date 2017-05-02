@@ -38,7 +38,7 @@
 		"binsoul/net-mqtt"	: "~0.2",
 
 		"react/promise"			: "~2.0",
-		"react/socket-client"	: "~0.5"
+		"react/socket-client"	: "~0.5",
 
 		"psr/log"	: "~1.0"
 	},
