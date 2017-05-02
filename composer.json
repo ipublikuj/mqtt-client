@@ -1,5 +1,5 @@
 {
-	"name"			: "ipub/mqttt-client",
+	"name"			: "ipub/mqtt-client",
 	"type"			: "library",
 	"description"	: "Asynchronous MQTT client built on React",
 	"keywords"		: ["nette", "mqtt", "client", "ipub", "ipublikuj", "framework", "tools"],
