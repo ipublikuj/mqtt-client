@@ -1,0 +1,63 @@
+{
+	"name"			: "ipub/mqttt-client",
+	"type"			: "library",
+	"description"	: "Asynchronous MQTT client built on React",
+	"keywords"		: ["nette", "mqtt", "client", "ipub", "ipublikuj", "framework", "tools"],
+	"homepage"		: "https://github.com/iPublikuj/mqtt-client",
+	"license"		: ["GPL-2.0", "GPL-3.0"],
+
+	"authors": [
+		{
+			"name"		: "iPublikuj:cms",
+			"email"		: "info@ipublikuj.eu",
+			"homepage"	: "http://www.ipublikuj.eu/"
+		}
+	],
+
+	"support":{
+		"email"		:"support@ipublikuj.eu",
+		"issues"	:"https://github.com/iPublikuj/mqtt-client/issues"
+	},
+
+	"extra": {
+		"ipub"	: {
+			"configuration" : {
+				"extensions" : {
+					"mqttClient" : "IPub\\MQTTClient\\DI\\MQTTClientExtension"
+				}
+			}
+		}
+	},
+
+	"require": {
+		"php"	: ">=7.0.0",
+
+		"nette/di"			: "~2.4",
+		"nette/utils"		: "~2.4",
+
+		"binsoul/net-mqtt"	: "~0.2",
+
+		"react/promise"			: "~2.0",
+		"react/socket-client"	: "~0.5"
+
+		"psr/log"	: "~1.0"
+	},
+
+	"require-dev": {
+		"nette/bootstrap"		: "~2.4",
+		"nette/mail"			: "~2.4",
+		"nette/robot-loader"	: "~2.4",
+		"nette/safe-stream"		: "~2.3",
+		"nette/tester"			: "@dev",
+
+		"tracy/tracy"	: "@dev",
+
+		"pds/skeleton"	: "^1.0"
+	},
+
+	"autoload": {
+		"psr-0": {
+			"IPub\\WebSocketsWAMP\\": "src/"
+		}
+	}
+}
