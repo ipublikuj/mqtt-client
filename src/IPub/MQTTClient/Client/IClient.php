@@ -16,7 +16,6 @@ declare(strict_types = 1);
 
 namespace IPub\MQTTClient\Client;
 
-use React;
 use React\EventLoop;
 use React\Promise;
 
@@ -44,13 +43,10 @@ interface IClient
 
 	/**
 	 * @param Configuration $configuration
+	 *
+	 * @return void
 	 */
-	function setConfiguration(Configuration $configuration);
-
-	/**
-	 * @return Configuration
-	 */
-	function getConfiguration() : Configuration;
+	function setConfiguration(Configuration $configuration) : void;
 
 	/**
 	 * Return the host

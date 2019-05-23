@@ -26,7 +26,6 @@ use React\Stream;
 
 use BinSoul\Net\Mqtt;
 
-use IPub;
 use IPub\MQTTClient\Exceptions;
 use IPub\MQTTClient\React;
 
@@ -223,7 +222,7 @@ final class Client implements IClient
 		$this->parser = $parser;
 
 		if ($this->parser === NULL) {
-			$this->parser = new Mqtt\StreamParser();
+			$this->parser = new Mqtt\StreamParser;
 		}
 
 		$this->parser->onError(function (\Exception $ex) {
@@ -233,14 +232,14 @@ final class Client implements IClient
 		$this->identifierGenerator = $identifierGenerator;
 
 		if ($this->identifierGenerator === NULL) {
-			$this->identifierGenerator = new Mqtt\DefaultIdentifierGenerator();
+			$this->identifierGenerator = new Mqtt\DefaultIdentifierGenerator;
 		}
 	}
 
 	/**
 	 * {@inheritdoc}
 	 */
-	public function setLoop(EventLoop\LoopInterface $loop)
+	public function setLoop(EventLoop\LoopInterface $loop) : void
 	{
 		if (!$this->isConnected && !$this->isConnecting) {
 			$this->loop = $loop;
@@ -263,21 +262,13 @@ final class Client implements IClient
 	/**
 	 * {@inheritdoc}
 	 */
-	public function setConfiguration(Configuration $configuration)
+	public function setConfiguration(Configuration $configuration) : void
 	{
 		if ($this->isConnected() || $this->isConnecting) {
 			throw new Exceptions\InvalidStateException('Client is connecting or connected to the broker, therefore configuration could not be changed.');
 		}
 
 		$this->configuration = $configuration;
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	public function getConfiguration() : Configuration
-	{
-		return $this->configuration;
 	}
 
 	/**
@@ -322,7 +313,7 @@ final class Client implements IClient
 			$connection = $connection->withClientID($this->identifierGenerator->generateClientID());
 		}
 
-		$deferred = new Promise\Deferred();
+		$deferred = new Promise\Deferred;
 
 		$this->establishConnection()
 			->then(function (SocketClient\ConnectionInterface $connectionStream) use ($connection, $deferred) {
@@ -341,7 +332,7 @@ final class Client implements IClient
 
 						$deferred->resolve($this->connection);
 					})
-					->otherwise(function (\Exception $ex) use ($deferred, $connection) {
+					->otherwise(function (\Exception $ex) use ($connectionStream, $deferred, $connection) {
 						$this->isConnecting = FALSE;
 
 						$this->onError($ex, $this);
@@ -375,7 +366,7 @@ final class Client implements IClient
 
 		$this->isDisconnecting = TRUE;
 
-		$deferred = new Promise\Deferred();
+		$deferred = new Promise\Deferred;
 
 		$this->startFlow(new Mqtt\Flow\OutgoingDisconnectFlow($this->connection), TRUE)
 			->then(function (Mqtt\Connection $connection) use ($deferred) {
@@ -435,13 +426,16 @@ final class Client implements IClient
 	/**
 	 * {@inheritdoc}
 	 */
-	public function publishPeriodically(int $interval, Mqtt\Message $message, callable $generator) : Promise\ExtendedPromiseInterface
-	{
+	public function publishPeriodically(
+		int $interval,
+		Mqtt\Message $message,
+		callable $generator
+	) : Promise\ExtendedPromiseInterface {
 		if (!$this->isConnected) {
 			return new Promise\RejectedPromise(new Exceptions\LogicException('The client is not connected.'));
 		}
 
-		$deferred = new Promise\Deferred();
+		$deferred = new Promise\Deferred;
 
 		$this->timer[] = $this->loop->addPeriodicTimer($interval, function () use ($message, $generator, $deferred) {
 			$this->publish($message->withPayload($generator($message->getTopic())))->then(
@@ -464,7 +458,7 @@ final class Client implements IClient
 	 */
 	private function establishConnection() : Promise\ExtendedPromiseInterface
 	{
-		$deferred = new Promise\Deferred();
+		$deferred = new Promise\Deferred;
 
 		$timer = $this->loop->addTimer($this->timeout, function () use ($deferred) {
 			$exception = new Exceptions\RuntimeException(sprintf('Connection timed out after %d seconds.', $this->timeout));
@@ -479,12 +473,13 @@ final class Client implements IClient
 			->then(function (SocketClient\ConnectionInterface $connectionStream) use ($deferred) {
 				/** @var Stream\Buffer $buffer */
 				$buffer = $connectionStream->getBuffer();
+
 				$buffer->on('full-drain', function () {
 					$this->handleSend();
 				});
 
-				$connectionStream->on('drain', function () {
-					$this->handleSend();
+				$connectionStream->on('drain', function () use($connectionStream) {
+					$this->handleSend($connectionStream);
 				});
 
 				$connectionStream->on('data', function ($data) {
@@ -517,7 +512,7 @@ final class Client implements IClient
 	 */
 	private function registerClient(Mqtt\Connection $connection) : Promise\ExtendedPromiseInterface
 	{
-		$deferred = new Promise\Deferred();
+		$deferred = new Promise\Deferred;
 
 		$responseTimer = $this->loop->addTimer($this->timeout, function () use ($deferred) {
 			$exception = new Exceptions\RuntimeException(sprintf('No response after %d seconds.', $this->timeout));
@@ -531,7 +526,7 @@ final class Client implements IClient
 
 			})->then(function (Mqtt\Connection $connection) use ($deferred) {
 				$this->timer[] = $this->loop->addPeriodicTimer(floor($connection->getKeepAlive() * 0.75), function () {
-					$this->startFlow(new Mqtt\Flow\OutgoingPingFlow());
+					$this->startFlow(new Mqtt\Flow\OutgoingPingFlow);
 				});
 
 				$deferred->resolve($connection);
@@ -550,7 +545,7 @@ final class Client implements IClient
 	 *
 	 * @return void
 	 */
-	private function handleReceive(string $data)
+	private function handleReceive(string $data) : void
 	{
 		if (!$this->isConnected && !$this->isConnecting) {
 			return;
@@ -576,7 +571,7 @@ final class Client implements IClient
 	 *
 	 * @return void
 	 */
-	private function handlePacket(Mqtt\Packet $packet)
+	private function handlePacket(Mqtt\Packet $packet) : void
 	{
 		switch ($packet->getPacketType()) {
 			case Mqtt\Packet::TYPE_PUBLISH:
@@ -632,7 +627,7 @@ final class Client implements IClient
 	 *
 	 * @return void
 	 */
-	private function handleSend()
+	private function handleSend() : void
 	{
 		$flow = NULL;
 
@@ -663,7 +658,7 @@ final class Client implements IClient
 	 *
 	 * @return void
 	 */
-	private function handleClose()
+	private function handleClose() : void
 	{
 		foreach ($this->timer as $timer) {
 			$this->loop->cancelTimer($timer);
@@ -689,7 +684,7 @@ final class Client implements IClient
 	 *
 	 * @return void
 	 */
-	private function handleError(\Exception $ex)
+	private function handleError(\Exception $ex) : void
 	{
 		$this->onError($ex, $this);
 	}
@@ -713,16 +708,16 @@ final class Client implements IClient
 			return new Promise\RejectedPromise($ex);
 		}
 
-		$deferred = new Promise\Deferred();
+		$deferred = new Promise\Deferred;
 		$internalFlow = new React\Flow($flow, $deferred, $packet, $isSilent);
 
 		if ($packet !== NULL) {
-			if ($this->connectionStream->getBuffer()->listening) {
-				$this->sendingFlows[] = $internalFlow;
-
-			} else {
+			if (!$this->connectionStream->getBuffer()->listening) {
 				$this->connectionStream->write($packet);
 				$this->writtenFlow = $internalFlow;
+
+			} else {
+				$this->sendingFlows[] = $internalFlow;
 			}
 
 		} else {
@@ -742,7 +737,7 @@ final class Client implements IClient
 	 *
 	 * @return void
 	 */
-	private function continueFlow(React\Flow $flow, Mqtt\Packet $packet)
+	private function continueFlow(React\Flow $flow, Mqtt\Packet $packet) : void
 	{
 		try {
 			$response = $flow->next($packet);
@@ -776,7 +771,7 @@ final class Client implements IClient
 	 *
 	 * @return void
 	 */
-	private function finishFlow(React\Flow $flow)
+	private function finishFlow(React\Flow $flow) : void
 	{
 		if ($flow->isSuccess()) {
 			if (!$flow->isSilent()) {
@@ -828,12 +823,12 @@ final class Client implements IClient
 	/**
 	 * @return void
 	 */
-	private function createConnector()
+	private function createConnector() : void
 	{
 		$this->connector = new SocketClient\TcpConnector($this->loop);
 
 		if ($this->configuration->isDNSEnabled()) {
-			$dnsResolverFactory = new Dns\Resolver\Factory();
+			$dnsResolverFactory = new Dns\Resolver\Factory;
 			$this->connector = new SocketClient\DnsConnector($this->connector, $dnsResolverFactory->createCached($this->configuration->getDNSAddress(), $this->loop));
 		}
 

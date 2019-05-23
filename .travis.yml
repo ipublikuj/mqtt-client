@@ -5,7 +5,7 @@ env:
   - NETTE=~3.0.0
 
 php:
-  - 7.0
+  - 7.2
 
 matrix:
   allow_failures:

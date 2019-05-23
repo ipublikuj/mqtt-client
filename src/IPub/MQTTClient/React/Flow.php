@@ -58,8 +58,12 @@ final class Flow implements Mqtt\Flow
 	 * @param Mqtt\Packet $packet
 	 * @param bool $isSilent
 	 */
-	public function __construct(Mqtt\Flow $decorated, Promise\Deferred $deferred, Mqtt\Packet $packet = NULL, bool $isSilent = FALSE)
-	{
+	public function __construct(
+		Mqtt\Flow $decorated,
+		Promise\Deferred $deferred,
+		Mqtt\Packet $packet = NULL,
+		bool $isSilent = FALSE
+	) {
 		$this->decorated = $decorated;
 		$this->deferred = $deferred;
 		$this->packet = $packet;

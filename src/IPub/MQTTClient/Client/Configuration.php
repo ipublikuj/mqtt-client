@@ -20,7 +20,6 @@ use Nette;
 
 use BinSoul\Net\Mqtt;
 
-use IPub;
 use IPub\MQTTClient\Exceptions;
 
 /**
@@ -128,7 +127,7 @@ final class Configuration
 	/**
 	 * @return string|NULL
 	 */
-	public function getHttpHost()
+	public function getHttpHost() : ?string
 	{
 		return $this->httpHost;
 	}
@@ -144,7 +143,7 @@ final class Configuration
 	/**
 	 * @return string|NULL
 	 */
-	public function getAddress()
+	public function getAddress() : ?string
 	{
 		return $this->address;
 	}

@@ -151,7 +151,7 @@ final class MQTTClientExtension extends DI\CompilerExtension
 	public static function register(Nette\Configurator $config, string $extensionName = 'mqttClient')
 	{
 		$config->onCompile[] = function (Nette\Configurator $config, DI\Compiler $compiler) use ($extensionName) {
-			$compiler->addExtension($extensionName, new MQTTClientExtension());
+			$compiler->addExtension($extensionName, new MQTTClientExtension);
 		};
 	}
 }
