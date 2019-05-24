@@ -21,13 +21,13 @@ use Nette;
 use React\EventLoop;
 use React\Dns;
 use React\Promise;
-use React\SocketClient;
+use React\Socket;
 use React\Stream;
 
 use BinSoul\Net\Mqtt;
 
 use IPub\MQTTClient\Exceptions;
-use IPub\MQTTClient\React;
+use IPub\MQTTClient\Flow;
 
 /**
  * Connection client
@@ -128,14 +128,14 @@ final class Client implements IClient
 	private $configuration;
 
 	/**
-	 * @var SocketClient\ConnectorInterface
+	 * @var Socket\ConnectorInterface
 	 */
 	private $connector;
 
 	/**
-	 * @var SocketClient\ConnectionInterface
+	 * @var Socket\ConnectionInterface|NULL
 	 */
-	private $connectionStream;
+	private $stream = NULL;
 
 	/**
 	 * @var Mqtt\Connection
@@ -183,17 +183,17 @@ final class Client implements IClient
 	private $timeout = 5;
 
 	/**
-	 * @var React\Flow[]
+	 * @var Flow\Envelope[]
 	 */
 	private $receivingFlows = [];
 
 	/**
-	 * @var React\Flow[]
+	 * @var Flow\Envelope[]
 	 */
 	private $sendingFlows = [];
 
 	/**
-	 * @var React\Flow
+	 * @var Flow\Envelope
 	 */
 	private $writtenFlow;
 
@@ -316,8 +316,8 @@ final class Client implements IClient
 		$deferred = new Promise\Deferred;
 
 		$this->establishConnection()
-			->then(function (SocketClient\ConnectionInterface $connectionStream) use ($connection, $deferred) {
-				$this->connectionStream = $connectionStream;
+			->then(function (Socket\ConnectionInterface $stream) use ($connection, $deferred) {
+				$this->stream = $stream;
 
 				$this->onOpen($connection, $this);
 
@@ -332,14 +332,16 @@ final class Client implements IClient
 
 						$deferred->resolve($this->connection);
 					})
-					->otherwise(function (\Exception $ex) use ($connectionStream, $deferred, $connection) {
+					->otherwise(function (\Exception $ex) use ($stream, $deferred, $connection) {
 						$this->isConnecting = FALSE;
 
 						$this->onError($ex, $this);
 
 						$deferred->reject($ex);
 
-						$this->connectionStream->close();
+						if ($this->stream !== NULL) {
+							$this->stream->close();
+						}
 
 						$this->onClose($connection, $this);
 					});
@@ -377,7 +379,9 @@ final class Client implements IClient
 
 				$deferred->resolve($connection);
 
-				$this->connectionStream->close();
+				if ($this->stream !== NULL) {
+					$this->stream->close();
+				}
 			})
 			->otherwise(function () use ($deferred) {
 				$this->isDisconnecting = FALSE;
@@ -438,14 +442,15 @@ final class Client implements IClient
 		$deferred = new Promise\Deferred;
 
 		$this->timer[] = $this->loop->addPeriodicTimer($interval, function () use ($message, $generator, $deferred) {
-			$this->publish($message->withPayload($generator($message->getTopic())))->then(
-				function ($value) use ($deferred) {
-					$deferred->notify($value);
-				},
-				function (\Exception $e) use ($deferred) {
-					$deferred->reject($e);
-				}
-			);
+			$this->publish($message->withPayload($generator($message->getTopic())))
+				->then(
+					function ($value) use ($deferred) {
+						$deferred->notify($value);
+					},
+					function (\Exception $e) use ($deferred) {
+						$deferred->reject($e);
+					}
+				);
 		});
 
 		return $deferred->promise();
@@ -470,31 +475,20 @@ final class Client implements IClient
 			->always(function () use ($timer) {
 				$this->loop->cancelTimer($timer);
 			})
-			->then(function (SocketClient\ConnectionInterface $connectionStream) use ($deferred) {
-				/** @var Stream\Buffer $buffer */
-				$buffer = $connectionStream->getBuffer();
-
-				$buffer->on('full-drain', function () {
-					$this->handleSend();
-				});
-
-				$connectionStream->on('drain', function () use($connectionStream) {
-					$this->handleSend($connectionStream);
-				});
-
-				$connectionStream->on('data', function ($data) {
+			->then(function (Stream\DuplexStreamInterface $stream) use ($deferred) {
+				$stream->on('data', function ($data) {
 					$this->handleReceive($data);
 				});
 
-				$connectionStream->on('close', function () {
+				$stream->on('close', function () {
 					$this->handleClose();
 				});
 
-				$connectionStream->on('error', function (\Exception $ex) {
+				$stream->on('error', function (\Exception $ex) {
 					$this->handleError($ex);
 				});
 
-				$deferred->resolve($connectionStream);
+				$deferred->resolve($stream);
 			})
 			->otherwise(function (\Exception $ex) use ($deferred) {
 				$deferred->reject($ex);
@@ -638,7 +632,7 @@ final class Client implements IClient
 
 		if (count($this->sendingFlows) > 0) {
 			$this->writtenFlow = array_shift($this->sendingFlows);
-			$this->connectionStream->write($this->writtenFlow->getPacket());
+			$this->stream->write($this->writtenFlow->getPacket());
 		}
 
 		if ($flow !== NULL) {
@@ -670,7 +664,7 @@ final class Client implements IClient
 		$this->isDisconnecting = FALSE;
 		$this->isConnected = FALSE;
 		$this->connection = NULL;
-		$this->connectionStream = NULL;
+		$this->stream = NULL;
 
 		if ($connection !== NULL) {
 			$this->onClose($connection, $this);
@@ -709,15 +703,17 @@ final class Client implements IClient
 		}
 
 		$deferred = new Promise\Deferred;
-		$internalFlow = new React\Flow($flow, $deferred, $packet, $isSilent);
+		$internalFlow = new Flow\Envelope($flow, $deferred, $packet, $isSilent);
 
 		if ($packet !== NULL) {
-			if (!$this->connectionStream->getBuffer()->listening) {
-				$this->connectionStream->write($packet);
-				$this->writtenFlow = $internalFlow;
+			if ($this->writtenFlow !== NULL) {
+				$this->sendingFlows[] = $internalFlow;
 
 			} else {
-				$this->sendingFlows[] = $internalFlow;
+				$this->stream->write($packet);
+				$this->writtenFlow = $internalFlow;
+
+				$this->handleSend();
 			}
 
 		} else {
@@ -732,12 +728,12 @@ final class Client implements IClient
 	/**
 	 * Continues the given flow
 	 *
-	 * @param React\Flow $flow
+	 * @param Flow\Envelope $flow
 	 * @param Mqtt\Packet $packet
 	 *
 	 * @return void
 	 */
-	private function continueFlow(React\Flow $flow, Mqtt\Packet $packet) : void
+	private function continueFlow(Flow\Envelope $flow, Mqtt\Packet $packet) : void
 	{
 		try {
 			$response = $flow->next($packet);
@@ -749,12 +745,14 @@ final class Client implements IClient
 		}
 
 		if ($response !== NULL) {
-			if ($this->connectionStream->getBuffer()->listening) {
+			if ($this->writtenFlow !== NULL) {
 				$this->sendingFlows[] = $flow;
 
 			} else {
-				$this->connectionStream->write($response);
+				$this->stream->write($response);
 				$this->writtenFlow = $flow;
+
+				$this->handleSend();
 			}
 
 		} elseif ($flow->isFinished()) {
@@ -767,11 +765,11 @@ final class Client implements IClient
 	/**
 	 * Finishes the given flow
 	 *
-	 * @param React\Flow $flow
+	 * @param Flow\Envelope $flow
 	 *
 	 * @return void
 	 */
-	private function finishFlow(React\Flow $flow) : void
+	private function finishFlow(Flow\Envelope $flow) : void
 	{
 		if ($flow->isSuccess()) {
 			if (!$flow->isSilent()) {
@@ -825,15 +823,16 @@ final class Client implements IClient
 	 */
 	private function createConnector() : void
 	{
-		$this->connector = new SocketClient\TcpConnector($this->loop);
+		$this->connector = new Socket\TcpConnector($this->loop);
 
 		if ($this->configuration->isDNSEnabled()) {
 			$dnsResolverFactory = new Dns\Resolver\Factory;
-			$this->connector = new SocketClient\DnsConnector($this->connector, $dnsResolverFactory->createCached($this->configuration->getDNSAddress(), $this->loop));
+
+			$this->connector = new Socket\DnsConnector($this->connector, $dnsResolverFactory->createCached($this->configuration->getDNSAddress(), $this->loop));
 		}
 
 		if ($this->configuration->isSSLEnabled()) {
-			$this->connector = new SocketClient\SecureConnector($this->connector, $this->loop, $this->configuration->getSSLConfiguration());
+			$this->connector = new Socket\SecureConnector($this->connector, $this->loop, $this->configuration->getSSLConfiguration());
 		}
 	}
 }

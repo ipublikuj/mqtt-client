@@ -17,7 +17,7 @@ declare(strict_types = 1);
 namespace IPub\MQTTClient\Logger\Formatter;
 
 /**
- * MQTTClient server output formater interface
+ * Client server output formater interface
  *
  * @package        iPublikuj:MQTTClient!
  * @subpackage     Logger

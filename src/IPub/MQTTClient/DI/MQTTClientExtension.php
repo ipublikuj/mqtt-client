@@ -51,7 +51,7 @@ final class MQTTClientExtension extends DI\CompilerExtension
 	 * @var array
 	 */
 	private $defaults = [
-		'broker' => [
+		'broker'     => [
 			'httpHost' => NULL,
 			'port'     => 1883,
 			'address'  => NULL,
@@ -72,7 +72,7 @@ final class MQTTClientExtension extends DI\CompilerExtension
 			'protocol'  => 4,
 			'clean'     => TRUE,
 		],
-		'loop'   => NULL,
+		'loop'       => NULL,
 	];
 
 	/**
@@ -89,7 +89,7 @@ final class MQTTClientExtension extends DI\CompilerExtension
 
 		if ($configuration['loop'] === NULL) {
 			$loop = $builder->addDefinition($this->prefix('client.loop'))
-				->setClass(React\EventLoop\LoopInterface::class)
+				->setType(React\EventLoop\LoopInterface::class)
 				->setFactory('React\EventLoop\Factory::create')
 				->setAutowired(FALSE);
 
@@ -120,11 +120,11 @@ final class MQTTClientExtension extends DI\CompilerExtension
 
 		if ($builder->findByType(Log\LoggerInterface::class) === []) {
 			$builder->addDefinition($this->prefix('server.logger'))
-				->setClass(Logger\Console::class);
+				->setType(Logger\Console::class);
 		}
 
 		$builder->addDefinition($this->prefix('client.client'))
-			->setClass(Client\Client::class)
+			->setType(Client\Client::class)
 			->setArguments([
 				'eventLoop'     => $loop,
 				'configuration' => $configuration,
@@ -137,7 +137,7 @@ final class MQTTClientExtension extends DI\CompilerExtension
 
 		foreach ($commands as $name => $cmd) {
 			$builder->addDefinition($this->prefix('commands' . lcfirst($name)))
-				->setClass($cmd)
+				->setType($cmd)
 				->addTag(Console\DI\ConsoleExtension::TAG_COMMAND);
 		}
 	}

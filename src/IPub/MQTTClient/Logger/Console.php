@@ -23,7 +23,7 @@ use Psr\Log;
 use IPub;
 
 /**
- * MQTTClient server output printer
+ * Client server output printer
  *
  * @package        iPublikuj:MQTTClient!
  * @subpackage     Logger

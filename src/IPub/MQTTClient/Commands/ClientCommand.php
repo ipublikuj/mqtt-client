@@ -25,7 +25,6 @@ use Psr\Log;
 
 use BinSoul\Net\Mqtt;
 
-use IPub;
 use IPub\MQTTClient\Client;
 use IPub\MQTTClient\Logger;
 
