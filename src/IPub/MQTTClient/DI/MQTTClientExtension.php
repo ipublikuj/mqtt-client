@@ -16,18 +16,18 @@ declare(strict_types = 1);
 
 namespace IPub\MQTTClient\DI;
 
-use BinSoul\Net\Mqtt\DefaultConnection;
 use Nette;
 use Nette\DI;
 use Nette\PhpGenerator as Code;
 
 use Kdyby\Console;
 
+use BinSoul\Net\Mqtt;
+
 use React;
 
 use Psr\Log;
 
-use IPub;
 use IPub\MQTTClient;
 use IPub\MQTTClient\Client;
 use IPub\MQTTClient\Commands;
@@ -97,7 +97,7 @@ final class MQTTClientExtension extends DI\CompilerExtension
 			$loop = $builder->getDefinition(ltrim($configuration['loop'], '@'));
 		}
 
-		$connection = new DefaultConnection(
+		$connection = new Mqtt\DefaultConnection(
 			$configuration['connection']['username'],
 			$configuration['connection']['password'],
 			NULL,
