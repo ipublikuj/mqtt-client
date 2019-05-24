@@ -43,7 +43,7 @@ class ExtensionTest extends Tester\TestCase
 		$dic = $this->createContainer();
 
 		Assert::true($dic->getService('mqttClient.client.loop') instanceof React\EventLoop\LoopInterface);
-		Assert::true($dic->getService('mqttClient.clients.client') instanceof MQTTClient\Client\Client);
+		Assert::true($dic->getService('mqttClient.client.client') instanceof MQTTClient\Client\Client);
 	}
 
 	/**
