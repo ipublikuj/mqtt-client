@@ -37,6 +37,7 @@ use IPub\MQTTClient\Flow;
  *
  * @author         Adam Kadlec <adam.kadlec@ipublikuj.eu>
  *
+ * @method onStart()
  * @method onOpen(Mqtt\Connection $connection, IClient $client)
  * @method onConnect(Mqtt\Connection $connection, IClient $client)
  * @method onDisconnect(Mqtt\Connection $connection, IClient $client)
@@ -56,6 +57,11 @@ final class Client implements IClient
 	 * Implement nette smart magic
 	 */
 	use Nette\SmartObject;
+
+	/**
+	 * @var \Closure
+	 */
+	public $onStart = [];
 
 	/**
 	 * @var \Closure
@@ -303,6 +309,8 @@ final class Client implements IClient
 		if ($this->isConnected || $this->isConnecting) {
 			return new Promise\RejectedPromise(new Exceptions\LogicException('The client is already connected.'));
 		}
+
+		$this->onStart();
 
 		$this->isConnecting = TRUE;
 		$this->isConnected = FALSE;

@@ -88,10 +88,14 @@ final class MQTTClientExtension extends DI\CompilerExtension
 		$configuration = $this->getConfig($this->defaults);
 
 		if ($configuration['loop'] === NULL) {
-			$loop = $builder->addDefinition($this->prefix('client.loop'))
-				->setType(React\EventLoop\LoopInterface::class)
-				->setFactory('React\EventLoop\Factory::create')
-				->setAutowired(FALSE);
+			if ($builder->getByType(React\EventLoop\LoopInterface::class) === NULL) {
+				$loop = $builder->addDefinition($this->prefix('client.loop'))
+					->setType(React\EventLoop\LoopInterface::class)
+					->setFactory('React\EventLoop\Factory::create');
+
+			} else {
+				$loop = $builder->getDefinitionByType(React\EventLoop\LoopInterface::class);
+			}
 
 		} else {
 			$loop = $builder->getDefinition(ltrim($configuration['loop'], '@'));
