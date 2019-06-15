@@ -49,6 +49,11 @@ class ClientCommand extends Console\Command\Command
 	private $logger;
 
 	/**
+	 * @var bool
+	 */
+	private $isRunning = FALSE;
+
+	/**
 	 * @param Client\IClient $client
 	 * @param Log\LoggerInterface|NULL $logger
 	 * @param string|NULL $name
@@ -62,6 +67,20 @@ class ClientCommand extends Console\Command\Command
 
 		$this->client = $client;
 		$this->logger = $logger === NULL ? new Log\NullLogger : $logger;
+	}
+
+	/**
+	 * @param Log\LoggerInterface $logger
+	 *
+	 * @return void
+	 */
+	public function setLogger(Log\LoggerInterface $logger) : void
+	{
+		if ($this->isRunning) {
+			throw new Exceptions\InvalidStateException('Client is connected, logger could not be set.');
+		}
+
+		$this->logger = $logger;
 	}
 
 	/**
@@ -98,6 +117,8 @@ class ClientCommand extends Console\Command\Command
 		});
 
 		$this->client->connect();
+
+		$this->isRunning = TRUE;
 
 		$this->client->getLoop()->run();
 	}
