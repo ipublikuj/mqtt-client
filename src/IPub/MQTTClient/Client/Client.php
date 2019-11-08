@@ -209,6 +209,11 @@ final class Client implements IClient
 	private $timer = [];
 
 	/**
+	 * @var Mqtt\Message|NULL
+	 */
+	private $lastMessage = NULL;
+
+	/**
 	 * @param EventLoop\LoopInterface $eventLoop
 	 * @param Configuration $configuration
 	 * @param Mqtt\IdentifierGenerator|NULL $identifierGenerator
@@ -811,7 +816,22 @@ final class Client implements IClient
 						break;
 
 					case 'message':
-						$this->onMessage($flow->getResult(), $this);
+						/** @var Mqtt\Message $message */
+						$message = $flow->getResult();
+
+						if ($this->lastMessage === NULL) {
+							$this->lastMessage = $flow->getResult();
+
+						} elseif (
+							$this->lastMessage->getTopic() === $message->getTopic()
+							&& $this->lastMessage->getPayload() === $message->getPayload()
+						) {
+							break;
+						}
+
+						$this->lastMessage = $message;
+
+						$this->onMessage($message, $this);
 						break;
 				}
 			}
