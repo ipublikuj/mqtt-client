@@ -1,3 +1,13 @@
 extensions:
-	console	: Kdyby\Console\DI\ConsoleExtension
+	console: Contributte\Console\DI\ConsoleExtension(%consoleMode%)
 	mqttClient : IPub\MQTTClient\DI\MQTTClientExtension
+
+console:
+	name: iPublikuj:Packages!
+	version: '1.0'
+	catchExceptions: true
+	autoExit: true
+	url: http://example.com
+	lazy: false
+	helperSet: \Symfony\Component\Console\Helper\HelperSet
+	helpers: []
