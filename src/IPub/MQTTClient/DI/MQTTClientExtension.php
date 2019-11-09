@@ -20,8 +20,6 @@ use Nette;
 use Nette\DI;
 use Nette\PhpGenerator as Code;
 
-use Kdyby\Console;
-
 use BinSoul\Net\Mqtt;
 
 use React;
@@ -80,12 +78,14 @@ final class MQTTClientExtension extends DI\CompilerExtension
 	 */
 	public function loadConfiguration()
 	{
-		parent::loadConfiguration();
-
-		/** @var DI\ContainerBuilder $builder */
+		// Get container builder
 		$builder = $this->getContainerBuilder();
-		/** @var array $configuration */
-		$configuration = $this->getConfig($this->defaults);
+
+		// Merge extension default config
+		$this->setConfig(DI\Config\Helpers::merge($this->config, DI\Helpers::expand($this->defaults, $builder->parameters)));
+
+		// Get extension configuration
+		$configuration = $this->getConfig();
 
 		if ($configuration['loop'] === NULL) {
 			if ($builder->getByType(React\EventLoop\LoopInterface::class) === NULL) {
@@ -141,8 +141,7 @@ final class MQTTClientExtension extends DI\CompilerExtension
 
 		foreach ($commands as $name => $cmd) {
 			$builder->addDefinition($this->prefix('commands' . lcfirst($name)))
-				->setType($cmd)
-				->addTag(Console\DI\ConsoleExtension::TAG_COMMAND);
+				->setType($cmd);
 		}
 	}
 
