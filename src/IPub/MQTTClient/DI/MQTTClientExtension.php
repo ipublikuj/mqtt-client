@@ -71,6 +71,7 @@ final class MQTTClientExtension extends DI\CompilerExtension
 			'clean'     => TRUE,
 		],
 		'loop'       => NULL,
+		'console'    => FALSE,
 	];
 
 	/**
@@ -134,14 +135,16 @@ final class MQTTClientExtension extends DI\CompilerExtension
 				'configuration' => $configuration,
 			]);
 
-		// Define all console commands
-		$commands = [
-			'client' => Commands\ClientCommand::class,
-		];
+		if ($configuration['console'] === NULL) {
+			// Define all console commands
+			$commands = [
+				'client' => Commands\ClientCommand::class,
+			];
 
-		foreach ($commands as $name => $cmd) {
-			$builder->addDefinition($this->prefix('commands' . lcfirst($name)))
-				->setType($cmd);
+			foreach ($commands as $name => $cmd) {
+				$builder->addDefinition($this->prefix('commands' . lcfirst($name)))
+					->setType($cmd);
+			}
 		}
 	}
 
