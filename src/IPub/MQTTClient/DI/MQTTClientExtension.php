@@ -71,6 +71,7 @@ final class MQTTClientExtension extends DI\CompilerExtension
 			'clean'     => TRUE,
 		],
 		'loop'       => NULL,
+		'console'    => FALSE,
 	];
 
 	/**
@@ -111,7 +112,7 @@ final class MQTTClientExtension extends DI\CompilerExtension
 			$configuration['connection']['clean']
 		);
 
-		$configuration = new Client\Configuration(
+		$clientConfiguration = new Client\Configuration(
 			$configuration['broker']['httpHost'],
 			$configuration['broker']['port'],
 			$configuration['broker']['address'],
@@ -131,17 +132,19 @@ final class MQTTClientExtension extends DI\CompilerExtension
 			->setType(Client\Client::class)
 			->setArguments([
 				'eventLoop'     => $loop,
-				'configuration' => $configuration,
+				'configuration' => $clientConfiguration,
 			]);
 
-		// Define all console commands
-		$commands = [
-			'client' => Commands\ClientCommand::class,
-		];
+		if ($configuration['console'] === NULL) {
+			// Define all console commands
+			$commands = [
+				'client' => Commands\ClientCommand::class,
+			];
 
-		foreach ($commands as $name => $cmd) {
-			$builder->addDefinition($this->prefix('commands' . lcfirst($name)))
-				->setType($cmd);
+			foreach ($commands as $name => $cmd) {
+				$builder->addDefinition($this->prefix('commands' . lcfirst($name)))
+					->setType($cmd);
+			}
 		}
 	}
 
