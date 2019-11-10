@@ -112,7 +112,7 @@ final class MQTTClientExtension extends DI\CompilerExtension
 			$configuration['connection']['clean']
 		);
 
-		$configuration = new Client\Configuration(
+		$clientConfiguration = new Client\Configuration(
 			$configuration['broker']['httpHost'],
 			$configuration['broker']['port'],
 			$configuration['broker']['address'],
@@ -132,7 +132,7 @@ final class MQTTClientExtension extends DI\CompilerExtension
 			->setType(Client\Client::class)
 			->setArguments([
 				'eventLoop'     => $loop,
-				'configuration' => $configuration,
+				'configuration' => $clientConfiguration,
 			]);
 
 		if ($configuration['console'] === NULL) {
