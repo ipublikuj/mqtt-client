@@ -1,0 +1,18 @@
+extensions:
+	mqttClient : IPub\MQTTClient\DI\MQTTClientExtension
+	events : Contributte\EventDispatcher\DI\EventDispatcherExtension
+	console: Contributte\Console\DI\ConsoleExtension(%consoleMode%)
+
+mqttClient:
+	console: true
+	symfonyEvets: true
+
+console:
+	name: iPublikuj:Packages!
+	version: '1.0'
+	catchExceptions: true
+	autoExit: true
+	url: null
+	lazy: false
+	helperSet: null
+	helpers: []
