@@ -14,5 +14,4 @@ console:
 	autoExit: true
 	url: null
 	lazy: false
-	helperSet: null
 	helpers: []
