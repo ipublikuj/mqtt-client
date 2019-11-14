@@ -22,6 +22,8 @@ use Nette\PhpGenerator as Code;
 
 use BinSoul\Net\Mqtt;
 
+use Symfony\Component\EventDispatcher;
+
 use React;
 
 use Psr\Log;
@@ -29,6 +31,7 @@ use Psr\Log;
 use IPub\MQTTClient;
 use IPub\MQTTClient\Client;
 use IPub\MQTTClient\Commands;
+use IPub\MQTTClient\Events;
 use IPub\MQTTClient\Logger;
 
 /**
@@ -49,7 +52,7 @@ final class MQTTClientExtension extends DI\CompilerExtension
 	 * @var array
 	 */
 	private $defaults = [
-		'broker'     => [
+		'broker'       => [
 			'httpHost' => NULL,
 			'port'     => 1883,
 			'address'  => NULL,
@@ -62,7 +65,7 @@ final class MQTTClientExtension extends DI\CompilerExtension
 				'sslSettings' => [],
 			],
 		],
-		'connection' => [
+		'connection'   => [
 			'username'  => '',
 			'password'  => '',
 			'clientID'  => '',
@@ -70,8 +73,9 @@ final class MQTTClientExtension extends DI\CompilerExtension
 			'protocol'  => 4,
 			'clean'     => TRUE,
 		],
-		'loop'       => NULL,
-		'console'    => FALSE,
+		'loop'         => NULL,
+		'console'      => FALSE,
+		'symfonyEvets' => FALSE,
 	];
 
 	/**
@@ -135,7 +139,7 @@ final class MQTTClientExtension extends DI\CompilerExtension
 				'configuration' => $clientConfiguration,
 			]);
 
-		if ($configuration['console'] === NULL) {
+		if ($configuration['console'] === TRUE) {
 			// Define all console commands
 			$commands = [
 				'client' => Commands\ClientCommand::class,
@@ -145,6 +149,99 @@ final class MQTTClientExtension extends DI\CompilerExtension
 				$builder->addDefinition($this->prefix('commands' . lcfirst($name)))
 					->setType($cmd);
 			}
+		}
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function beforeCompile()
+	{
+		parent::beforeCompile();
+
+		// Get container builder
+		$builder = $this->getContainerBuilder();
+
+		// Merge extension default config
+		$this->setConfig(DI\Config\Helpers::merge($this->config, DI\Helpers::expand($this->defaults, $builder->parameters)));
+
+		// Get extension configuration
+		$configuration = $this->getConfig();
+
+		// Get container builder
+		$builder = $this->getContainerBuilder();
+
+		if ($configuration['symfonyEvets'] === TRUE) {
+			$dispatcher = $builder->getDefinition($builder->getByType(EventDispatcher\EventDispatcherInterface::class));
+
+			$client = $builder->getDefinition($builder->getByType(Client\Client::class));
+			assert($client instanceof DI\ServiceDefinition);
+
+			$client->addSetup('?->onStart[] = function() {?->dispatch(new ?(...func_get_args()));}', [
+				'@self',
+				$dispatcher,
+				new Nette\PhpGenerator\PhpLiteral(Events\StartEvent::class),
+			]);
+			$client->addSetup('?->onOpen[] = function() {?->dispatch(new ?(...func_get_args()));}', [
+				'@self',
+				$dispatcher,
+				new Nette\PhpGenerator\PhpLiteral(Events\OpenEvent::class),
+			]);
+			$client->addSetup('?->onConnect[] = function() {?->dispatch(new ?(...func_get_args()));}', [
+				'@self',
+				$dispatcher,
+				new Nette\PhpGenerator\PhpLiteral(Events\ConnectEvent::class),
+			]);
+			$client->addSetup('?->onDisconnect[] = function() {?->dispatch(new ?(...func_get_args()));}', [
+				'@self',
+				$dispatcher,
+				new Nette\PhpGenerator\PhpLiteral(Events\DisconnectEvent::class),
+			]);
+			$client->addSetup('?->onClose[] = function() {?->dispatch(new ?(...func_get_args()));}', [
+				'@self',
+				$dispatcher,
+				new Nette\PhpGenerator\PhpLiteral(Events\CloseEvent::class),
+			]);
+			$client->addSetup('?->onPing[] = function() {?->dispatch(new ?(...func_get_args()));}', [
+				'@self',
+				$dispatcher,
+				new Nette\PhpGenerator\PhpLiteral(Events\PingEvent::class),
+			]);
+			$client->addSetup('?->onPong[] = function() {?->dispatch(new ?(...func_get_args()));}', [
+				'@self',
+				$dispatcher,
+				new Nette\PhpGenerator\PhpLiteral(Events\PongEvent::class),
+			]);
+			$client->addSetup('?->onPublish[] = function() {?->dispatch(new ?(...func_get_args()));}', [
+				'@self',
+				$dispatcher,
+				new Nette\PhpGenerator\PhpLiteral(Events\PublishEvent::class),
+			]);
+			$client->addSetup('?->onSubscribe[] = function() {?->dispatch(new ?(...func_get_args()));}', [
+				'@self',
+				$dispatcher,
+				new Nette\PhpGenerator\PhpLiteral(Events\SubscribeEvent::class),
+			]);
+			$client->addSetup('?->onUnsubscribe[] = function() {?->dispatch(new ?(...func_get_args()));}', [
+				'@self',
+				$dispatcher,
+				new Nette\PhpGenerator\PhpLiteral(Events\UnsubscribeEvent::class),
+			]);
+			$client->addSetup('?->onMessage[] = function() {?->dispatch(new ?(...func_get_args()));}', [
+				'@self',
+				$dispatcher,
+				new Nette\PhpGenerator\PhpLiteral(Events\MessageEvent::class),
+			]);
+			$client->addSetup('?->onWarning[] = function() {?->dispatch(new ?(...func_get_args()));}', [
+				'@self',
+				$dispatcher,
+				new Nette\PhpGenerator\PhpLiteral(Events\WarningEvent::class),
+			]);
+			$client->addSetup('?->onError[] = function() {?->dispatch(new ?(...func_get_args()));}', [
+				'@self',
+				$dispatcher,
+				new Nette\PhpGenerator\PhpLiteral(Events\ErrorEvent::class),
+			]);
 		}
 	}
 
