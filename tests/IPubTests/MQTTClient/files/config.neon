@@ -5,7 +5,7 @@ extensions:
 
 mqttClient:
 	console: true
-	symfonyEvets: true
+	symfonyEvents: true
 
 console:
 	name: iPublikuj:Packages!
