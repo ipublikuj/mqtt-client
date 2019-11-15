@@ -52,7 +52,7 @@ final class MQTTClientExtension extends DI\CompilerExtension
 	 * @var array
 	 */
 	private $defaults = [
-		'broker'       => [
+		'broker'        => [
 			'httpHost' => NULL,
 			'port'     => 1883,
 			'address'  => NULL,
@@ -65,7 +65,7 @@ final class MQTTClientExtension extends DI\CompilerExtension
 				'sslSettings' => [],
 			],
 		],
-		'connection'   => [
+		'connection'    => [
 			'username'  => '',
 			'password'  => '',
 			'clientID'  => '',
@@ -73,9 +73,9 @@ final class MQTTClientExtension extends DI\CompilerExtension
 			'protocol'  => 4,
 			'clean'     => TRUE,
 		],
-		'loop'         => NULL,
-		'console'      => FALSE,
-		'symfonyEvets' => FALSE,
+		'loop'          => NULL,
+		'console'       => FALSE,
+		'symfonyEvents' => FALSE,
 	];
 
 	/**
@@ -171,7 +171,7 @@ final class MQTTClientExtension extends DI\CompilerExtension
 		// Get container builder
 		$builder = $this->getContainerBuilder();
 
-		if ($configuration['symfonyEvets'] === TRUE) {
+		if ($configuration['symfonyEvents'] === TRUE) {
 			$dispatcher = $builder->getDefinition($builder->getByType(EventDispatcher\EventDispatcherInterface::class));
 
 			$client = $builder->getDefinition($builder->getByType(Client\Client::class));
