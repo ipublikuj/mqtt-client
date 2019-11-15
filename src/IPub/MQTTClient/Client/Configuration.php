@@ -115,10 +115,10 @@ final class Configuration
 	public function getUri() : string
 	{
 		if ($this->httpHost !== NULL) {
-			return $this->httpHost .':'. $this->port;
+			return $this->httpHost . ':' . $this->port;
 
 		} elseif ($this->address !== NULL) {
-			return $this->address .':'. $this->port;
+			return $this->address . ':' . $this->port;
 		}
 
 		throw new Exceptions\InvalidStateException('Broker http host or address is not specified');
