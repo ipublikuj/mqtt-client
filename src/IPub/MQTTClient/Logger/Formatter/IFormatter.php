@@ -39,6 +39,7 @@ interface IFormatter
 	 * @return void
 	 */
 	function warning(string $message);
+
 	/**
 	 * @param string $message
 	 *

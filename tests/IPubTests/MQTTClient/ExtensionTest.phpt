@@ -1,6 +1,7 @@
 <?php
 /**
  * Test: IPub\MQTTClient\Extension
+ *
  * @testCase
  *
  * @copyright      More in license.md
