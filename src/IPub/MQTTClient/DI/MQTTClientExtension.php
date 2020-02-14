@@ -58,7 +58,7 @@ final class MQTTClientExtension extends DI\CompilerExtension
 					'address' => Schema\Expect::string('8.8.8.8'),
 				]),
 				'secured'  => Schema\Expect::structure([
-					'enable'      => Schema\Expect::bool(TRUE),
+					'enable'      => Schema\Expect::bool(FALSE),
 					'sslSettings' => Schema\Expect::array([]),
 				]),
 			]),
