@@ -21,6 +21,8 @@ use React\Promise;
 
 use BinSoul\Net\Mqtt;
 
+use IPub\MQTTClient\Configuration;
+
 /**
  * Connection client interface
  *
@@ -42,11 +44,11 @@ interface IClient
 	function getLoop() : EventLoop\LoopInterface;
 
 	/**
-	 * @param Configuration $configuration
+	 * @param Configuration\Broker $configuration
 	 *
 	 * @return void
 	 */
-	function setConfiguration(Configuration $configuration) : void;
+	function setConfiguration(Configuration\Broker $configuration) : void;
 
 	/**
 	 * Return the host

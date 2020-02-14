@@ -18,9 +18,7 @@ namespace IPub\MQTTClient\DI;
 
 use Nette;
 use Nette\DI;
-use Nette\PhpGenerator as Code;
-
-use BinSoul\Net\Mqtt;
+use Nette\Schema;
 
 use Symfony\Component\EventDispatcher;
 
@@ -31,6 +29,7 @@ use Psr\Log;
 use IPub\MQTTClient;
 use IPub\MQTTClient\Client;
 use IPub\MQTTClient\Commands;
+use IPub\MQTTClient\Configuration;
 use IPub\MQTTClient\Events;
 use IPub\MQTTClient\Logger;
 
@@ -41,58 +40,49 @@ use IPub\MQTTClient\Logger;
  * @subpackage     DI
  *
  * @author         Adam Kadlec <adam.kadlec@ipublikuj.eu>
- *
- * @method DI\ContainerBuilder getContainerBuilder()
- * @method array getConfig(array $default)
- * @method string prefix($id)
  */
 final class MQTTClientExtension extends DI\CompilerExtension
 {
 	/**
-	 * @var array
+	 * {@inheritdoc}
 	 */
-	private $defaults = [
-		'broker'        => [
-			'httpHost' => NULL,
-			'port'     => 1883,
-			'address'  => NULL,
-			'dns'      => [
-				'enable'  => TRUE,
-				'address' => '8.8.8.8',
-			],
-			'secured'  => [
-				'enable'      => FALSE,
-				'sslSettings' => [],
-			],
-		],
-		'connection'    => [
-			'username'  => '',
-			'password'  => '',
-			'clientID'  => '',
-			'keepAlive' => 60,
-			'protocol'  => 4,
-			'clean'     => TRUE,
-		],
-		'loop'          => NULL,
-		'console'       => FALSE,
-		'symfonyEvents' => FALSE,
-	];
+	public function getConfigSchema() : Schema\Schema
+	{
+		return Schema\Expect::structure([
+			'broker'     => Schema\Expect::structure([
+				'httpHost' => Schema\Expect::string()->nullable(),
+				'port'     => Schema\Expect::int(1883),
+				'address'  => Schema\Expect::string('127.0.0.1'),
+				'dns'      => Schema\Expect::structure([
+					'enable'  => Schema\Expect::bool(TRUE),
+					'address' => Schema\Expect::string('8.8.8.8'),
+				]),
+				'secured'  => Schema\Expect::structure([
+					'enable'      => Schema\Expect::bool(TRUE),
+					'sslSettings' => Schema\Expect::array([]),
+				]),
+			]),
+			'connection' => Schema\Expect::structure([
+				'username'  => Schema\Expect::string(''),
+				'password'  => Schema\Expect::string(''),
+				'clientID'  => Schema\Expect::string(''),
+				'keepAlive' => Schema\Expect::int(60),
+				'protocol'  => Schema\Expect::int(4),
+				'clean'     => Schema\Expect::bool(TRUE),
+			]),
+			'loop'       => Schema\Expect::anyOf(Schema\Expect::string(), Schema\Expect::type(DI\Definitions\Statement::class))->nullable(),
+		]);
+	}
 
 	/**
 	 * {@inheritdoc}
 	 */
 	public function loadConfiguration()
 	{
-		// Get container builder
 		$builder = $this->getContainerBuilder();
-		/** @var array $configuration */
-		if (method_exists($this, 'validateConfig')) {
-			$configuration = $this->validateConfig($this->defaults);
-		} else {
-			$configuration = $this->getConfig($this->defaults);
-		}
+		$configuration = $this->getConfig();
 
-		if ($configuration['loop'] === NULL) {
+		if ($configuration->loop === NULL) {
 			if ($builder->getByType(React\EventLoop\LoopInterface::class) === NULL) {
 				$loop = $builder->addDefinition($this->prefix('client.loop'))
 					->setType(React\EventLoop\LoopInterface::class)
@@ -103,29 +93,33 @@ final class MQTTClientExtension extends DI\CompilerExtension
 			}
 
 		} else {
-			$loop = $builder->getDefinition(ltrim($configuration['loop'], '@'));
+			$loop = is_string($configuration->loop) ? new DI\Definitions\Statement($configuration->loop) : $configuration->loop;
 		}
 
-		$connection = new Mqtt\DefaultConnection(
-			$configuration['connection']['username'],
-			$configuration['connection']['password'],
-			NULL,
-			$configuration['connection']['clientID'],
-			$configuration['connection']['keepAlive'],
-			$configuration['connection']['protocol'],
-			$configuration['connection']['clean']
-		);
+		$connection = $builder->addDefinition($this->prefix('client.configuration.connection'))
+			->setType(Configuration\Connection::class)
+			->setArguments([
+				'username'  => $configuration->connection->username,
+				'password'  => $configuration->connection->password,
+				'will'      => NULL,
+				'clientID'  => $configuration->connection->clientID,
+				'keepAlive' => $configuration->connection->keepAlive,
+				'protocol'  => $configuration->connection->protocol,
+				'clean'     => $configuration->connection->clean,
+			]);
 
-		$clientConfiguration = new Client\Configuration(
-			$configuration['broker']['httpHost'],
-			$configuration['broker']['port'],
-			$configuration['broker']['address'],
-			$configuration['broker']['dns']['enable'],
-			$configuration['broker']['dns']['address'],
-			$configuration['broker']['secured']['enable'],
-			$configuration['broker']['secured']['sslSettings'],
-			$connection
-		);
+		$brokerConfiguration = $builder->addDefinition($this->prefix('client.configuration'))
+			->setType(Configuration\Broker::class)
+			->setArguments([
+				'httpHost'    => $configuration->broker->httpHost,
+				'port'        => $configuration->broker->port,
+				'address'     => $configuration->broker->address,
+				'enableDNS'   => $configuration->broker->dns->enable,
+				'dnsAddress'  => $configuration->broker->dns->address,
+				'enableSSL'   => $configuration->broker->secured->enable,
+				'sslSettings' => $configuration->broker->secured->sslSettings,
+				$connection,
+			]);
 
 		if ($builder->findByType(Log\LoggerInterface::class) === []) {
 			$builder->addDefinition($this->prefix('server.logger'))
@@ -136,17 +130,17 @@ final class MQTTClientExtension extends DI\CompilerExtension
 			->setType(Client\Client::class)
 			->setArguments([
 				'eventLoop'     => $loop,
-				'configuration' => $clientConfiguration,
+				'configuration' => $brokerConfiguration,
 			]);
 
-		if ($configuration['console'] === TRUE) {
+		if (class_exists('Symfony\Component\Console\Command\Command')) {
 			// Define all console commands
 			$commands = [
 				'client' => Commands\ClientCommand::class,
 			];
 
 			foreach ($commands as $name => $cmd) {
-				$builder->addDefinition($this->prefix('commands' . lcfirst($name)))
+				$builder->addDefinition($this->prefix('commands.' . lcfirst($name)))
 					->setType($cmd);
 			}
 		}
@@ -159,23 +153,13 @@ final class MQTTClientExtension extends DI\CompilerExtension
 	{
 		parent::beforeCompile();
 
-		// Get container builder
-		$builder = $this->getContainerBuilder();
-		/** @var array $configuration */
-		if (method_exists($this, 'validateConfig')) {
-			$configuration = $this->validateConfig($this->defaults);
-		} else {
-			$configuration = $this->getConfig($this->defaults);
-		}
-
-		// Get container builder
 		$builder = $this->getContainerBuilder();
 
-		if ($configuration['symfonyEvents'] === TRUE) {
+		if (interface_exists('Symfony\Component\EventDispatcher\EventDispatcherInterface')) {
 			$dispatcher = $builder->getDefinition($builder->getByType(EventDispatcher\EventDispatcherInterface::class));
 
 			$client = $builder->getDefinition($builder->getByType(Client\Client::class));
-			assert($client instanceof DI\ServiceDefinition);
+			assert($client instanceof DI\Definitions\ServiceDefinition);
 
 			$client->addSetup('?->onStart[] = function() {?->dispatch(new ?(...func_get_args()));}', [
 				'@self',
@@ -251,8 +235,10 @@ final class MQTTClientExtension extends DI\CompilerExtension
 	 *
 	 * @return void
 	 */
-	public static function register(Nette\Configurator $config, string $extensionName = 'mqttClient')
-	{
+	public static function register(
+		Nette\Configurator $config,
+		string $extensionName = 'mqttClient'
+	) :void {
 		$config->onCompile[] = function (Nette\Configurator $config, DI\Compiler $compiler) use ($extensionName) {
 			$compiler->addExtension($extensionName, new MQTTClientExtension);
 		};

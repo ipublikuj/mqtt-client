@@ -26,6 +26,7 @@ use Psr\Log;
 use BinSoul\Net\Mqtt;
 
 use IPub\MQTTClient\Client;
+use IPub\MQTTClient\Exceptions;
 use IPub\MQTTClient\Logger;
 
 /**
@@ -73,6 +74,8 @@ class ClientCommand extends Console\Command\Command
 	 * @param Log\LoggerInterface $logger
 	 *
 	 * @return void
+	 *
+	 * @throws Exceptions\InvalidStateException
 	 */
 	public function setLogger(Log\LoggerInterface $logger) : void
 	{

@@ -16,6 +16,8 @@ declare(strict_types = 1);
 
 namespace IPub\MQTTClient\Client;
 
+use Closure;
+
 use Nette;
 
 use React\EventLoop;
@@ -26,6 +28,7 @@ use React\Stream;
 
 use BinSoul\Net\Mqtt;
 
+use IPub\MQTTClient\Configuration;
 use IPub\MQTTClient\Exceptions;
 use IPub\MQTTClient\Flow;
 
@@ -59,67 +62,67 @@ final class Client implements IClient
 	use Nette\SmartObject;
 
 	/**
-	 * @var \Closure
+	 * @var Closure
 	 */
 	public $onStart = [];
 
 	/**
-	 * @var \Closure
+	 * @var Closure
 	 */
 	public $onOpen = [];
 
 	/**
-	 * @var \Closure
+	 * @var Closure
 	 */
 	public $onConnect = [];
 
 	/**
-	 * @var \Closure
+	 * @var Closure
 	 */
 	public $onDisconnect = [];
 
 	/**
-	 * @var \Closure
+	 * @var Closure
 	 */
 	public $onClose = [];
 
 	/**
-	 * @var \Closure
+	 * @var Closure
 	 */
 	public $onPing = [];
 
 	/**
-	 * @var \Closure
+	 * @var Closure
 	 */
 	public $onPong = [];
 
 	/**
-	 * @var \Closure
+	 * @var Closure
 	 */
 	public $onPublish = [];
 
 	/**
-	 * @var \Closure
+	 * @var Closure
 	 */
 	public $onSubscribe = [];
 
 	/**
-	 * @var \Closure
+	 * @var Closure
 	 */
 	public $onUnsubscribe = [];
 
 	/**
-	 * @var \Closure
+	 * @var Closure
 	 */
 	public $onMessage = [];
 
 	/**
-	 * @var \Closure
+	 * @var Closure
 	 */
 	public $onWarning = [];
 
 	/**
-	 * @var \Closure
+	 * @var Closure
 	 */
 	public $onError = [];
 
@@ -129,7 +132,7 @@ final class Client implements IClient
 	private $loop;
 
 	/**
-	 * @var Configuration
+	 * @var Configuration\Broker
 	 */
 	private $configuration;
 
@@ -204,7 +207,7 @@ final class Client implements IClient
 	private $writtenFlow;
 
 	/**
-	 * @var EventLoop\Timer\TimerInterface[]
+	 * @var EventLoop\TimerInterface[]
 	 */
 	private $timer = [];
 
@@ -215,13 +218,13 @@ final class Client implements IClient
 
 	/**
 	 * @param EventLoop\LoopInterface $eventLoop
-	 * @param Configuration $configuration
+	 * @param Configuration\Broker $configuration
 	 * @param Mqtt\IdentifierGenerator|NULL $identifierGenerator
 	 * @param Mqtt\StreamParser|NULL $parser
 	 */
 	public function __construct(
 		EventLoop\LoopInterface $eventLoop,
-		Configuration $configuration,
+		Configuration\Broker $configuration,
 		Mqtt\IdentifierGenerator $identifierGenerator = NULL,
 		Mqtt\StreamParser $parser = NULL
 	) {
@@ -272,8 +275,10 @@ final class Client implements IClient
 
 	/**
 	 * {@inheritdoc}
+	 *
+	 * @throws Exceptions\InvalidStateException
 	 */
-	public function setConfiguration(Configuration $configuration) : void
+	public function setConfiguration(Configuration\Broker $configuration) : void
 	{
 		if ($this->isConnected() || $this->isConnecting) {
 			throw new Exceptions\InvalidStateException('Client is connecting or connected to the broker, therefore configuration could not be changed.');
@@ -284,6 +289,8 @@ final class Client implements IClient
 
 	/**
 	 * {@inheritdoc}
+	 *
+	 * @throws Exceptions\InvalidStateException
 	 */
 	public function getUri() : string
 	{
@@ -323,7 +330,7 @@ final class Client implements IClient
 		$connection = $this->configuration->getConnection();
 
 		if ($connection->getClientID() === '') {
-			$connection = $connection->withClientID($this->identifierGenerator->generateClientID());
+			$connection->setClientID($this->identifierGenerator->generateClientID());
 		}
 
 		$deferred = new Promise\Deferred;
@@ -473,6 +480,8 @@ final class Client implements IClient
 	 * Establishes a network connection to a server
 	 *
 	 * @return Promise\ExtendedPromiseInterface
+	 *
+	 * @throws Exceptions\InvalidStateException
 	 */
 	private function establishConnection() : Promise\ExtendedPromiseInterface
 	{

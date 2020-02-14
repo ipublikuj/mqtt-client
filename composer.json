@@ -35,9 +35,7 @@
   "extra" : {
     "ipub" : {
       "configuration" : {
-        "extensions" : {
-          "mqttClient" : "IPub\\MQTTClient\\DI\\MQTTClientExtension"
-        }
+        "extension" : "IPub\\MQTTClient\\DI\\MQTTClientExtension"
       }
     }
   },
@@ -45,10 +43,10 @@
   "require" : {
     "php" : ">=7.2.0",
 
-    "nette/di" : "~2.4 || ~3.0",
-    "nette/utils" : "~2.5 || ~3.0",
+    "nette/di" : "~3.0",
+    "nette/utils" : "~3.0",
 
-    "binsoul/net-mqtt" : "~0.2",
+    "binsoul/net-mqtt" : "0.2.1",
 
     "react/promise" : "~2.7",
     "react/socket" : "~1.2",
@@ -57,16 +55,16 @@
   },
 
   "require-dev" : {
-    "nette/bootstrap" : "~2.4 || ~3.0",
-    "nette/mail" : "~2.4 || ~3.0",
-    "nette/robot-loader" : "~2.4 || ~3.0",
+    "nette/bootstrap" : "~3.0",
+    "nette/mail" : "~3.0",
+    "nette/robot-loader" : "~3.0",
     "nette/safe-stream" : "~2.3",
     "nette/tester" : "~2.3",
 
     "tracy/tracy" : "~2.4",
 
-    "contributte/event-dispatcher": "~0.5",
-    "contributte/console": "~0.6",
+    "contributte/event-dispatcher" : "~0.5",
+    "contributte/console" : "~0.6",
 
     "pds/skeleton" : "~1.0"
   },

@@ -1,6 +1,6 @@
 <?php
 /**
- * Configuration.php
+ * Broker.php
  *
  * @copyright      More in license.md
  * @license        http://www.ipublikuj.eu
@@ -14,23 +14,21 @@
 
 declare(strict_types = 1);
 
-namespace IPub\MQTTClient\Client;
+namespace IPub\MQTTClient\Configuration;
 
 use Nette;
-
-use BinSoul\Net\Mqtt;
 
 use IPub\MQTTClient\Exceptions;
 
 /**
- * MQTT client configuration container
+ * MQTT client broker configuration
  *
  * @package        iPublikuj:MQTTClient!
  * @subpackage     Client
  *
  * @author         Adam Kadlec <adam.kadlec@ipublikuj.eu>
  */
-final class Configuration
+final class Broker
 {
 	/**
 	 * Implement nette smart magic
@@ -73,7 +71,7 @@ final class Configuration
 	private $sslSettings = [];
 
 	/**
-	 * @var Mqtt\Connection
+	 * @var Connection
 	 */
 	private $connection;
 
@@ -85,7 +83,7 @@ final class Configuration
 	 * @param string $dnsAddress
 	 * @param bool $enableSSL
 	 * @param array $sslSettings
-	 * @param Mqtt\Connection $connection
+	 * @param Connection $connection
 	 */
 	public function __construct(
 		string $httpHost = NULL,
@@ -95,7 +93,7 @@ final class Configuration
 		string $dnsAddress = '8.8.8.8',
 		bool $enableSSL = FALSE,
 		array $sslSettings,
-		Mqtt\Connection $connection
+		Connection $connection
 	) {
 		$this->httpHost = $httpHost;
 		$this->port = $port;
@@ -181,9 +179,9 @@ final class Configuration
 	}
 
 	/**
-	 * @return Mqtt\Connection
+	 * @return Connection
 	 */
-	public function getConnection() : Mqtt\Connection
+	public function getConnection() : Connection
 	{
 		return $this->connection;
 	}
