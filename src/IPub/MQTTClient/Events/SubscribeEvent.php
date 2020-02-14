@@ -41,7 +41,7 @@ final class SubscribeEvent extends EventDispatcher\Event
 	private $client;
 
 	/**
-	 * @param Mqtt\Message $message
+	 * @param Mqtt\Subscription $subscription
 	 * @param Client\IClient $client
 	 */
 	public function __construct(

@@ -19,7 +19,7 @@ namespace IPub\MQTTClient\Logger\Formatter;
 use Symfony\Component\Console;
 
 /**
- * Client server symfony console output formater
+ * Client server symfony console output formatter
  *
  * @package        iPublikuj:MQTTClient!
  * @subpackage     Logger

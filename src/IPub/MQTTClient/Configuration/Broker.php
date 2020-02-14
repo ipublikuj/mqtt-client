@@ -92,7 +92,7 @@ final class Broker
 		bool $enableDNS = TRUE,
 		string $dnsAddress = '8.8.8.8',
 		bool $enableSSL = FALSE,
-		array $sslSettings,
+		array $sslSettings = [],
 		Connection $connection
 	) {
 		$this->httpHost = $httpHost;

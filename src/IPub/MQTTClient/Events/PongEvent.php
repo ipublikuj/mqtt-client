@@ -29,11 +29,6 @@ use IPub\MQTTClient\Client;
 final class PongEvent extends EventDispatcher\Event
 {
 	/**
-	 * @var Mqtt\Connection
-	 */
-	private $connection;
-
-	/**
 	 * @var Client\IClient
 	 */
 	private $client;

@@ -18,8 +18,6 @@ use Exception;
 
 use Symfony\Contracts\EventDispatcher;
 
-use BinSoul\Net\Mqtt;
-
 use IPub\MQTTClient\Client;
 
 /**

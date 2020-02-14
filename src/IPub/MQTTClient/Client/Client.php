@@ -17,6 +17,7 @@ declare(strict_types = 1);
 namespace IPub\MQTTClient\Client;
 
 use Closure;
+use Exception;
 
 use Nette;
 
@@ -51,8 +52,8 @@ use IPub\MQTTClient\Flow;
  * @method onSubscribe(Mqtt\Subscription $subscription, IClient $client)
  * @method onUnsubscribe(Mqtt\Subscription $subscription, IClient $client)
  * @method onMessage(Mqtt\Message $message, IClient $client)
- * @method onWarning(\Exception $ex, IClient $client)
- * @method onError(\Exception $ex, IClient $client)
+ * @method onWarning(Exception $ex, IClient $client)
+ * @method onError(Exception $ex, IClient $client)
  */
 final class Client implements IClient
 {
@@ -239,7 +240,7 @@ final class Client implements IClient
 			$this->parser = new Mqtt\StreamParser;
 		}
 
-		$this->parser->onError(function (\Exception $ex) {
+		$this->parser->onError(function (Exception $ex) {
 			$this->onError($ex, $this);
 		});
 
@@ -315,6 +316,8 @@ final class Client implements IClient
 
 	/**
 	 * {@inheritdoc}
+	 *
+	 * @throws Exceptions\InvalidStateException
 	 */
 	public function connect() : Promise\ExtendedPromiseInterface
 	{
@@ -352,7 +355,7 @@ final class Client implements IClient
 
 						$deferred->resolve($this->connection);
 					})
-					->otherwise(function (\Exception $ex) use ($stream, $deferred, $connection) {
+					->otherwise(function (Exception $ex) use ($stream, $deferred, $connection) {
 						$this->isConnecting = FALSE;
 
 						$this->onError($ex, $this);
@@ -366,7 +369,7 @@ final class Client implements IClient
 						$this->onClose($connection, $this);
 					});
 			})
-			->otherwise(function (\Exception $ex) use ($deferred) {
+			->otherwise(function (Exception $ex) use ($deferred) {
 				$this->isConnecting = FALSE;
 
 				$this->onError($ex, $this);
@@ -467,7 +470,7 @@ final class Client implements IClient
 					function ($value) use ($deferred) {
 						$deferred->notify($value);
 					},
-					function (\Exception $e) use ($deferred) {
+					function (Exception $e) use ($deferred) {
 						$deferred->reject($e);
 					}
 				);
@@ -506,13 +509,13 @@ final class Client implements IClient
 					$this->handleClose();
 				});
 
-				$stream->on('error', function (\Exception $ex) {
+				$stream->on('error', function (Exception $ex) {
 					$this->handleError($ex);
 				});
 
 				$deferred->resolve($stream);
 			})
-			->otherwise(function (\Exception $ex) use ($deferred) {
+			->otherwise(function (Exception $ex) use ($deferred) {
 				$deferred->reject($ex);
 			});
 
@@ -547,7 +550,7 @@ final class Client implements IClient
 
 				$deferred->resolve($connection);
 
-			})->otherwise(function (\Exception $ex) use ($deferred) {
+			})->otherwise(function (Exception $ex) use ($deferred) {
 				$deferred->reject($ex);
 			});
 
@@ -696,11 +699,11 @@ final class Client implements IClient
 	/**
 	 * Handles errors of the stream
 	 *
-	 * @param \Exception $ex
+	 * @param Exception $ex
 	 *
 	 * @return void
 	 */
-	private function handleError(\Exception $ex) : void
+	private function handleError(Exception $ex) : void
 	{
 		$this->onError($ex, $this);
 	}
@@ -718,7 +721,7 @@ final class Client implements IClient
 		try {
 			$packet = $flow->start();
 
-		} catch (\Exception $ex) {
+		} catch (Exception $ex) {
 			$this->onError($ex, $this);
 
 			return new Promise\RejectedPromise($ex);
@@ -760,7 +763,7 @@ final class Client implements IClient
 		try {
 			$response = $flow->next($packet);
 
-		} catch (\Exception $ex) {
+		} catch (Exception $ex) {
 			$this->onError($ex, $this);
 
 			return;
