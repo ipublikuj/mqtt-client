@@ -1,13 +1,8 @@
 extensions:
-	mqttClient : IPub\MQTTClient\DI\MQTTClientExtension
-	events : Contributte\EventDispatcher\DI\EventDispatcherExtension
-	console: Contributte\Console\DI\ConsoleExtension(%consoleMode%)
+	contributteEvents	: Contributte\EventDispatcher\DI\EventDispatcherExtension
+	contributteConsole	: Contributte\Console\DI\ConsoleExtension(%consoleMode%)
 
-mqttClient:
-	console: true
-	symfonyEvents: true
-
-console:
+contributteConsole:
 	name: iPublikuj:Packages!
 	version: '1.0'
 	catchExceptions: true

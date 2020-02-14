@@ -31,7 +31,7 @@ use BinSoul\Net\Mqtt;
 final class Envelope implements Mqtt\Flow
 {
 	/**
-	 * @var Flow
+	 * @var Mqtt\Flow
 	 */
 	private $flow;
 
