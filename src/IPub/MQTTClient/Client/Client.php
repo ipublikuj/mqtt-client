@@ -63,67 +63,67 @@ final class Client implements IClient
 	use Nette\SmartObject;
 
 	/**
-	 * @var Closure
+	 * @var Closure[]
 	 */
 	public $onStart = [];
 
 	/**
-	 * @var Closure
+	 * @var Closure[]
 	 */
 	public $onOpen = [];
 
 	/**
-	 * @var Closure
+	 * @var Closure[]
 	 */
 	public $onConnect = [];
 
 	/**
-	 * @var Closure
+	 * @var Closure[]
 	 */
 	public $onDisconnect = [];
 
 	/**
-	 * @var Closure
+	 * @var Closure[]
 	 */
 	public $onClose = [];
 
 	/**
-	 * @var Closure
+	 * @var Closure[]
 	 */
 	public $onPing = [];
 
 	/**
-	 * @var Closure
+	 * @var Closure[]
 	 */
 	public $onPong = [];
 
 	/**
-	 * @var Closure
+	 * @var Closure[]
 	 */
 	public $onPublish = [];
 
 	/**
-	 * @var Closure
+	 * @var Closure[]
 	 */
 	public $onSubscribe = [];
 
 	/**
-	 * @var Closure
+	 * @var Closure[]
 	 */
 	public $onUnsubscribe = [];
 
 	/**
-	 * @var Closure
+	 * @var Closure[]
 	 */
 	public $onMessage = [];
 
 	/**
-	 * @var Closure
+	 * @var Closure[]
 	 */
 	public $onWarning = [];
 
 	/**
-	 * @var Closure
+	 * @var Closure[]
 	 */
 	public $onError = [];
 
