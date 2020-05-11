@@ -53,10 +53,6 @@ final class MQTTClientExtension extends DI\CompilerExtension
 				'httpHost' => Schema\Expect::string()->nullable(),
 				'port'     => Schema\Expect::int(1883),
 				'address'  => Schema\Expect::string('127.0.0.1'),
-				'dns'      => Schema\Expect::structure([
-					'enable'  => Schema\Expect::bool(TRUE),
-					'address' => Schema\Expect::string('8.8.8.8'),
-				]),
 				'secured'  => Schema\Expect::structure([
 					'enable'      => Schema\Expect::bool(FALSE),
 					'sslSettings' => Schema\Expect::array([]),
@@ -114,8 +110,6 @@ final class MQTTClientExtension extends DI\CompilerExtension
 				'httpHost'    => $configuration->broker->httpHost,
 				'port'        => $configuration->broker->port,
 				'address'     => $configuration->broker->address,
-				'enableDNS'   => $configuration->broker->dns->enable,
-				'dnsAddress'  => $configuration->broker->dns->address,
 				'enableSSL'   => $configuration->broker->secured->enable,
 				'sslSettings' => $configuration->broker->secured->sslSettings,
 				$connection,

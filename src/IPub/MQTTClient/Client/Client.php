@@ -22,7 +22,6 @@ use Exception;
 use Nette;
 
 use React\EventLoop;
-use React\Dns;
 use React\Promise;
 use React\Socket;
 use React\Stream;
@@ -232,8 +231,6 @@ final class Client implements IClient
 		$this->loop = $eventLoop;
 		$this->configuration = $configuration;
 
-		$this->createConnector();
-
 		$this->parser = $parser;
 
 		if ($this->parser === NULL) {
@@ -258,8 +255,6 @@ final class Client implements IClient
 	{
 		if (!$this->isConnected && !$this->isConnecting) {
 			$this->loop = $loop;
-
-			$this->createConnector();
 
 		} else {
 			throw new Exceptions\LogicException('Connection is already established. React event loop could not be changed.');
@@ -324,6 +319,8 @@ final class Client implements IClient
 		if ($this->isConnected || $this->isConnecting) {
 			return new Promise\RejectedPromise(new Exceptions\LogicException('The client is already connected.'));
 		}
+
+		$this->createConnector();
 
 		$this->onStart();
 
@@ -863,15 +860,10 @@ final class Client implements IClient
 	 */
 	private function createConnector() : void
 	{
-		$this->connector = new Socket\TcpConnector($this->loop);
-
-		if ($this->configuration->isDNSEnabled()) {
-			$dnsResolverFactory = new Dns\Resolver\Factory;
-
-			$this->connector = new Socket\DnsConnector($this->connector, $dnsResolverFactory->createCached($this->configuration->getDNSAddress(), $this->loop));
-		}
+		$this->connector = new Socket\Connector($this->loop);
 
 		if ($this->configuration->isSSLEnabled()) {
+			$this->connector = new Socket\TcpConnector($this->loop);
 			$this->connector = new Socket\SecureConnector($this->connector, $this->loop, $this->configuration->getSSLConfiguration());
 		}
 	}

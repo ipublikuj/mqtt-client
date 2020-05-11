@@ -53,16 +53,6 @@ final class Broker
 	/**
 	 * @var bool
 	 */
-	private $enableDNS = TRUE;
-
-	/**
-	 * @var string
-	 */
-	private $dnsAddress;
-
-	/**
-	 * @var bool
-	 */
 	private $enableSSL = FALSE;
 
 	/**
@@ -79,8 +69,6 @@ final class Broker
 	 * @param string|NULL $httpHost
 	 * @param int $port
 	 * @param string|NULL $address
-	 * @param bool $enableDNS
-	 * @param string $dnsAddress
 	 * @param bool $enableSSL
 	 * @param array $sslSettings
 	 * @param Connection $connection
@@ -89,8 +77,6 @@ final class Broker
 		string $httpHost = NULL,
 		int $port = 1883,
 		string $address = NULL,
-		bool $enableDNS = TRUE,
-		string $dnsAddress = '8.8.8.8',
 		bool $enableSSL = FALSE,
 		array $sslSettings = [],
 		Connection $connection
@@ -98,8 +84,6 @@ final class Broker
 		$this->httpHost = $httpHost;
 		$this->port = $port;
 		$this->address = $address;
-		$this->enableDNS = $enableDNS;
-		$this->dnsAddress = $dnsAddress;
 		$this->enableSSL = $enableSSL;
 		$this->sslSettings = $sslSettings;
 		$this->connection = $connection;
@@ -144,22 +128,6 @@ final class Broker
 	public function getAddress() : ?string
 	{
 		return $this->address;
-	}
-
-	/**
-	 * @return bool
-	 */
-	public function isDNSEnabled() : bool
-	{
-		return $this->enableDNS;
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getDNSAddress() : string
-	{
-		return $this->dnsAddress;
 	}
 
 	/**
